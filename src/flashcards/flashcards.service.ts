@@ -18,4 +18,8 @@ export class FlashcardsService {
     return this.flashcardsRepository.getFlashcardsByUserId(id);
   }
 
+  async updateFlashcard(userFlashcardId: number, userId: number, updateDto: { word?: string; translation?: string; image_url?: string }) {
+    return this.flashcardsRepository.updateFlashcard(userFlashcardId, userId, updateDto);
+  }
+
 }

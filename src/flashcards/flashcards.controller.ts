@@ -20,4 +20,17 @@ export class FlashcardsController {
   async getFlashcardById(@Param('id') id: string) : Promise<AllInfoFlashcard[]> {
     return this.flashcardsService.getFlashcardsByUserId(Number(id));
   }
+
+  @Patch('/:id')
+  async updateFlashcard(
+    @Param('id') id: string,
+    @Body() updateDto: { word?: string; translation?: string; image_url?: string; user_id?: number }
+  ) {
+    // user_id must be passed in body for ownership check (or obtain from auth in a future iteration)
+    const userId = updateDto.user_id;
+    if (!userId) {
+      throw new Error('user_id is required');
+    }
+    return this.flashcardsService.updateFlashcard(Number(id), Number(userId), updateDto);
+  }
 }

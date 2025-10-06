@@ -70,3 +70,8 @@ CREATE TRIGGER trigger_update_user_flashcards
 BEFORE UPDATE ON user_flashcards
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
+
+-------------------------------------
+-- Eliminar la restricción UNIQUE en la columna "word"
+ALTER TABLE words
+DROP CONSTRAINT IF EXISTS words_word_key;
