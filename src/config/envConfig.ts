@@ -8,6 +8,7 @@ export interface envConfigInterface {
 	user: string;
 	password: string;
 	server_port: number;
+	jwt_secret: string;
 }
 
 const env = process.env;
@@ -19,6 +20,7 @@ export const envConfig = (): envConfigInterface => {
 		database: env.DB_NAME || 'engli_cards',
 		user: env.DB_USER || 'postgres',
 		password: env.DB_PASSWORD || 'password',
-		server_port: parseInt(env.PORT || '3000')
+		server_port: parseInt(env.PORT || '3000'),
+		jwt_secret: env.JWT_SECRET || 'changeme'
 	};
 };

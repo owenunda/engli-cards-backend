@@ -9,7 +9,7 @@ export class UsersRepository {
 	async getAllUsers(): Promise<User[]> {
 		try {
 			const query = `
-				SELECT id, email, name, avatar_url created_at, updated_at 
+				SELECT id, email, name, avatar_url, created_at, updated_at 
 				FROM users`;
 			const result = await this.databaseService.query(query);
 			return result.rows;	
@@ -21,7 +21,7 @@ export class UsersRepository {
 
 	async getUserById(id: Number): Promise<User> {
 		try {
-			const query = 'SELECT id, email, name, avatar_url created_at, updated_at FROM users WHERE id = $1'
+			const query = 'SELECT id, email, name, avatar_url, created_at, updated_at FROM users WHERE id = $1'
 			const result = await this.databaseService.query(query, [id])
 			return result.rows[0]
 		} catch (error) {
@@ -29,14 +29,25 @@ export class UsersRepository {
 			throw error
 		}
 	}
+
+	async getUserByEmail(email: string): Promise<any> {
+		try {
+			const query = `SELECT id, name, email, password, avatar_url, created_at, updated_at FROM users WHERE email = $1 LIMIT 1`;
+			const result = await this.databaseService.query(query, [email]);
+			return result.rows[0];
+		} catch (error) {
+			console.error('Error al obtener usuario por email - users.repository.ts:39', error);
+			throw error;
+		}
+	}
 	
 	async createUser(user: CreateUserDto): Promise<User> {
 		try {
-			const query = `INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING id, name, email, avatar_url created_at, updated_at`;
+			const query = `INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING id, name, email, avatar_url, created_at, updated_at`;
 			const result = await this.databaseService.query(query, [user.name, user.email, user.password]);
 			return result.rows[0];
 		} catch (error) {
-			console.error('Error al crear el usuario: - users.repository.ts:39', error);
+			console.error('Error al crear el usuario: - users.repository.ts:50', error);
 			throw error;
 		}
 	} 

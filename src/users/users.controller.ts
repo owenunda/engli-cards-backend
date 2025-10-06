@@ -13,12 +13,14 @@ export class UsersController {
   }
 
   @Get('/:id')
-  getUserById(@Param() id: string){
-    console.log(id);
+  getUserById(@Param('id') id: string) {
+    return this.usersService.getUserById(Number(id));
   }
 
   @Post()
   createUser(@Body() user: CreateUserDto) {
     return this.usersService.createUser(user);
   }
+
+  // auth endpoints moved to AuthModule
 }
