@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { UsersRepository } from '../users/repositories/users.repository';
+import { UsersRepository } from '../users/repository/users.repository';
 import { RegisterDto } from './dto/register.dto';
 import { envConfig } from '../config/envConfig';
 import * as bcrypt from 'bcryptjs';
