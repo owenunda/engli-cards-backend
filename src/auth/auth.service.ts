@@ -12,6 +12,7 @@ export class AuthService {
 
   async register(UserDto: RegisterDto) {
     const existing = await this.usersRepository.getUserByEmail(UserDto.email);
+
     if (existing) throw new BadRequestException('User already exists');
 
     const salt = await bcrypt.genSalt(10);
@@ -24,7 +25,6 @@ export class AuthService {
 
   async login(userDto: LoginDto) {
     const user = await this.usersRepository.getUserByEmail(userDto.email);
-    
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const match = await bcrypt.compare(userDto.password, user.password);

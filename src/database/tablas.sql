@@ -75,3 +75,59 @@ EXECUTE FUNCTION update_timestamp();
 -- Eliminar la restricción UNIQUE en la columna "word"
 ALTER TABLE words
 DROP CONSTRAINT IF EXISTS words_word_key;
+
+
+CREATE TABLE decks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_deck_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+----------------------
+
+CREATE TABLE deck_flashcards (
+    id SERIAL PRIMARY KEY,
+    deck_id INT NOT NULL,
+    user_flashcard_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_deck
+        FOREIGN KEY (deck_id)
+        REFERENCES decks(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_flashcard
+        FOREIGN KEY (user_flashcard_id)
+        REFERENCES user_flashcards(id)
+        ON DELETE CASCADE
+);
+
+
+
+-- ===============================
+-- 3️⃣ Función general para updated_at
+-- ===============================
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ===============================
+-- 4️⃣ Triggers automáticos
+-- ===============================
+CREATE TRIGGER trigger_update_decks
+BEFORE UPDATE ON decks
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER trigger_update_deck_flashcards
+BEFORE UPDATE ON deck_flashcards
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();

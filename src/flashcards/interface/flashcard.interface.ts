@@ -19,6 +19,7 @@ export interface CreateFlashcardDto {
   translation: string;
   image_url?: string;
   user_id: number;
+  deck_id?: number;
 }
 
 export interface AllInfoFlashcard {

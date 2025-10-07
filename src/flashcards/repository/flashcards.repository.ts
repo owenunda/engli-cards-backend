@@ -31,6 +31,15 @@ export class FlashcardsRepository {
           WHERE uf.user_id = $1 AND uf.word_id = $2
         `;
         const resultGetUserFlashcard = await client.query(queryGetUserFlashcard, [createFlashcardDto.user_id, wordId]);
+
+        // insertamos en deck_flashcards la relacion deck-palabra si se proporcionó deck_id
+        if (createFlashcardDto.deck_id) {
+          await client.query(
+            `INSERT INTO deck_flashcards (deck_id, user_flashcard_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [createFlashcardDto.deck_id, resultGetUserFlashcard.rows[0].id]
+          );
+        }
+
         return resultGetUserFlashcard.rows[0];
       })
     } catch (error) {
