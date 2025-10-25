@@ -1,21 +1,40 @@
+Archivos y carpetas ignorados por Docker
+
+Directorios de compilación/generados
+
+dist
+coverage
 node_modules
+
+Archivos de registro y caché
+
 npm-debug.log
+*.log
+.eslintcache
+
+Archivos de entorno local
+
 .env
 .env.*
+
+Archivos del sistema y de herramientas (no necesarios para la build)
+
 .DS_Store
 .vscode
 .git
 .gitignore
 README.md
-dist
-coverage
-*.log
-test
-.eslintcache
+
+Archivos de prueba (opcional, si los necesitas para la build, quítalo)
+
+test/
+
+Archivos de configuración de herramientas que no son tsconfig
+
 .prettierrc
 eslint.config.mjs
-tsconfig.json
-tsconfig.build.json
 jest.config.js
-test/
-src/
+
+NOTA: tsconfig.json, tsconfig.build.json y src/ DEBEN ser incluidos para que la
+
+compilación de NestJS funcione dentro del Dockerfile.
