@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { UsersRepository } from './repository/users.repository';
-import { CreateUserDto } from './interfaces/user.interface';
+import { CreateUserDto, UpdateUserDto } from './interfaces/user.interface';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -18,6 +18,10 @@ export class UsersService {
 
   getUserById(id: number) {
     return this.usersRepository.getUserById(id);
+  }
+
+  updateUser(id: number, userData: UpdateUserDto) {
+    return this.usersRepository.updateUser(id, userData);
   }
 
   // auth operations moved to AuthModule

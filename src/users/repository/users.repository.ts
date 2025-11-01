@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
-import { CreateUserDto, User } from '../interfaces/user.interface';
+import { CreateUserDto, User, UpdateUserDto } from '../interfaces/user.interface';
 
 @Injectable()
 export class UsersRepository {
@@ -50,6 +50,34 @@ export class UsersRepository {
 			console.error('Error al crear el usuario: - users.repository.ts:50', error);
 			throw error;
 		}
-	} 
+	}
 
+	async updateUser(id: number, userData: UpdateUserDto): Promise<User> {
+		try {
+			// Filtrar solo los campos que tienen valor
+			const fieldsToUpdate = Object.keys(userData).filter(key => userData[key] !== undefined);
+			
+			if (fieldsToUpdate.length === 0) {
+				throw new Error('No hay campos para actualizar');
+			}
+
+			// Construir dinámicamente la query SET
+			const setClause = fieldsToUpdate.map((field, index) => `${field} = $${index + 2}`).join(', ');
+			const query = `UPDATE users SET ${setClause} WHERE id = $1 RETURNING id, name, email, avatar_url, created_at, updated_at`;
+			
+			// Preparar los valores para la query
+			const values = [id, ...fieldsToUpdate.map(field => userData[field])];
+			
+			const result = await this.databaseService.query(query, values);
+			
+			if (result.rows.length === 0) {
+				throw new Error(`Usuario con id ${id} no encontrado`);
+			}
+			
+			return result.rows[0];
+		} catch (error) {
+			console.error('Error al actualizar el usuario: - users.repository.ts:79', error);
+			throw error;
+		}
+	}
 }

@@ -1,8 +1,11 @@
-import { ApiProperty } from "@nestjs/swagger";
-export interface User {
+import { ApiProperty, PartialType } from "@nestjs/swagger";
+export class User {
 	id: number;
+	@ApiProperty({required: true})
 	email: string;
+	@ApiProperty({required: true})
 	name: string;
+	@ApiProperty({required: false})
 	avatar_url?: string;
 	password?: string;
 	created_at: Date;
@@ -18,9 +21,4 @@ export class CreateUserDto {
 	password: string;
 }
 
-export interface UpdateUserDto {
-	email?: string;
-	name?: string;
-	avatar_url?: string;
-	password?: string;
-}
+export class UpdateUserDto extends PartialType(User) {}
