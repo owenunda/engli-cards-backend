@@ -1,4 +1,6 @@
-export interface Word {
+import { ApiProperty } from "@nestjs/swagger";
+
+export class Word {
   id: number;
   translation: string;
   image_url?: string;
@@ -6,7 +8,7 @@ export interface Word {
   updated_at: Date;
 }
 
-export interface UserFlashcards {
+export class UserFlashcards {
   id: number;
   user_id: number;
   word_id: number;
@@ -14,7 +16,7 @@ export interface UserFlashcards {
   updated_at: Date;
 }
 
-export interface CreateFlashcardDto {
+export class CreateFlashcardDto {
   word: string;
   translation: string;
   image_url?: string;
@@ -22,13 +24,21 @@ export interface CreateFlashcardDto {
   deck_id?: number;
 }
 
-export interface AllInfoFlashcard {
+export class AllInfoFlashcard {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   user_id: number;
+  @ApiProperty()
   word_id: number;
+  @ApiProperty()
   word: string;
+  @ApiProperty()
   translation: string;
+  @ApiProperty()
   image_url?: string;
+  @ApiProperty()
   created_at: Date;
+  @ApiProperty()
   updated_at: Date;
 }

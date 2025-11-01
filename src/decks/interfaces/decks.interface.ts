@@ -1,28 +1,45 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { AllInfoFlashcard } from '../../flashcards/interface/flashcard.interface';
+import { IsEmail, IsNumber, IsString } from 'class-validator';
 
 
-export interface CreateDecksDto {
-  id: number;
+export class CreateDecksDto {
+
+  @ApiProperty({ required: true })
+  @IsString()
   name: string;
+
+  @ApiProperty({ required: true })
+  @IsNumber()
   user_id: number;
+}
+
+export class Decks {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+  @ApiProperty()
+  user_id: number;
+  @ApiProperty()
   created_at: Date;
+  @ApiProperty()
   updated_at: Date;
 }
 
-export interface Decks {
-  id: number;
-  name: string;
-  user_id: number;
-  created_at: Date;
-  updated_at: Date;
-}
 
-
-export interface DecksWithFlashcards {
+export class DecksWithFlashcards {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   name: string;
+  @ApiProperty()
   user_id: number;
+  @ApiProperty({ type: [AllInfoFlashcard] })
   flashcards: AllInfoFlashcard[];
+  @ApiProperty()
   created_at: Date;
+  @ApiProperty()
   updated_at: Date;
 }
