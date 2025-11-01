@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
-import { CreateUserDto, User, UpdateUserDto } from '../interfaces/user.interface';
+import { CreateUserDto, UpdateUserDto, User } from '../interfaces/user.interface';
+import { UserEntity } from '../entities/user.entity';
 
 @Injectable()
 export class UsersRepository {
 	constructor(private readonly databaseService: DatabaseService) {}
 
-	async getAllUsers(): Promise<User[]> {
+	async getAllUsers(): Promise<UserEntity[]> {
 		try {
 			const query = `
 				SELECT id, email, name, avatar_url, created_at, updated_at 
@@ -14,45 +15,47 @@ export class UsersRepository {
 			const result = await this.databaseService.query(query);
 			return result.rows;	
 		} catch (error) {
-			console.error('Error al obtener los usuarios: - users.repository.ts:17', error);
+			console.error('Error al obtener los usuarios: - users.repository.ts:18', error);
 			return [];
 		}
 	}
 
-	async getUserById(id: Number): Promise<User> {
+	async getUserById(id: Number): Promise<UserEntity> {
 		try {
 			const query = 'SELECT id, email, name, avatar_url, created_at, updated_at FROM users WHERE id = $1'
 			const result = await this.databaseService.query(query, [id])
 			return result.rows[0]
 		} catch (error) {
-			console.error('Error al obtener al usuario - users.repository.ts:28')
+			console.error('Error al obtener al usuario - users.repository.ts:29')
 			throw error
 		}
 	}
-
+	// necesario para el login
 	async getUserByEmail(email: string): Promise<any> {
 		try {
 			const query = `SELECT id, name, email, password, avatar_url, created_at, updated_at FROM users WHERE email = $1 LIMIT 1`;
 			const result = await this.databaseService.query(query, [email]);
 			return result.rows[0];
 		} catch (error) {
-			console.error('Error al obtener usuario por email - users.repository.ts:39', error);
+			console.error('Error al obtener usuario por email - users.repository.ts:40', error);
 			throw error;
 		}
 	}
 	
+
+	// no usar USER ENTITY AQUI PARA EVITAR INCLUIR EL PASSWORD
 	async createUser(user: CreateUserDto): Promise<User> {
 		try {
 			const query = `INSERT INTO users(name, email, password) VALUES($1, $2, $3) RETURNING id, name, email, avatar_url, created_at, updated_at`;
 			const result = await this.databaseService.query(query, [user.name, user.email, user.password]);
 			return result.rows[0];
 		} catch (error) {
-			console.error('Error al crear el usuario: - users.repository.ts:50', error);
+			console.error('Error al crear el usuario: - users.repository.ts:53', error);
 			throw error;
 		}
 	}
 
-	async updateUser(id: number, userData: UpdateUserDto): Promise<User> {
+	async updateUser(id: number, userData: UpdateUserDto): Promise<UserEntity> {
 		try {
 			// Filtrar solo los campos que tienen valor
 			const fieldsToUpdate = Object.keys(userData).filter(key => userData[key] !== undefined);
@@ -76,7 +79,7 @@ export class UsersRepository {
 			
 			return result.rows[0];
 		} catch (error) {
-			console.error('Error al actualizar el usuario: - users.repository.ts:79', error);
+			console.error('Error al actualizar el usuario: - users.repository.ts:82', error);
 			throw error;
 		}
 	}
@@ -92,7 +95,7 @@ export class UsersRepository {
 
 			return { message: `User with id ${id} has been deleted.` };
 		} catch (error) {
-			console.error('Error al eliminar el usuario: - users.repository.ts:95', error);
+			console.error('Error al eliminar el usuario: - users.repository.ts:98', error);
 			throw error;
 		}
 	}
