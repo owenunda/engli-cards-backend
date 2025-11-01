@@ -2,13 +2,14 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/commo
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './interfaces/user.interface';
 import { UserEntity } from './entities/user.entity';
-import { ApiCreatedResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  // documenting response type for Swagger
   @ApiResponse({ status: 201, type: UserEntity })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiOperation({ summary: 'Crea un nuevo usuario' })
