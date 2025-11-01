@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 export interface User {
 	id: number;
 	email: string;
@@ -8,9 +9,12 @@ export interface User {
 	updated_at: Date;
 }
 
-export interface CreateUserDto {
+export class CreateUserDto {
+	@ApiProperty({required: true})
 	name: string;
+	@ApiProperty({required: true})
 	email: string;
+	@ApiProperty({required: true})
 	password: string;
 }
 

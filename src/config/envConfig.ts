@@ -19,5 +19,6 @@ export const envConfig = () => {
 			.split(',')
 			.map((s) => s.trim())
 			.filter(Boolean),
+			node_env: env.NODE_ENV || 'development'
 	};
 };
