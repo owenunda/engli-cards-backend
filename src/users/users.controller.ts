@@ -10,6 +10,7 @@ export class UsersController {
 
 
   @Get()
+  @ApiCreatedResponse({ type: [UserEntity] })
   getAllUsers() {
     return this.usersService.getAllUsers();
   }
@@ -21,6 +22,7 @@ export class UsersController {
   }
 
   @Post()
+  @ApiCreatedResponse({ type: UserEntity })
   createUser(@Body() user: CreateUserDto) {
     return this.usersService.createUser(user);
   }
@@ -31,6 +33,7 @@ export class UsersController {
   }
 
   @Delete('/:id')
+  @ApiCreatedResponse({ description: "User deleted successfully" })
   deleteUser(@Param('id') id: string) {
     return this.usersService.deleteUser(Number(id));
   }
