@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './interfaces/user.interface';
 
@@ -25,6 +25,11 @@ export class UsersController {
   @Patch('/:id')
   updateUser(@Param('id') id: string, @Body() userData: UpdateUserDto) {
     return this.usersService.updateUser(Number(id), userData);
+  }
+
+  @Delete('/:id')
+  deleteUser(@Param('id') id: string) {
+    return this.usersService.deleteUser(Number(id));
   }
 
   // auth endpoints moved to AuthModule

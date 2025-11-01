@@ -24,5 +24,9 @@ export class UsersService {
     return this.usersRepository.updateUser(id, userData);
   }
 
+  deleteUser(id: number) {
+    return this.usersRepository.deleteUser(id);
+  }
+
   // auth operations moved to AuthModule
 }

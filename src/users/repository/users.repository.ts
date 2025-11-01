@@ -80,4 +80,20 @@ export class UsersRepository {
 			throw error;
 		}
 	}
+
+	async deleteUser(id: number): Promise<object> {
+		try {
+			
+			const query = `DELETE FROM users WHERE id = $1`;
+			const result = await this.databaseService.query(query, [id]);
+			if (result.rowCount === 0) {
+				return { message: `User with id ${id} not found.` };
+			}
+
+			return { message: `User with id ${id} has been deleted.` };
+		} catch (error) {
+			console.error('Error al eliminar el usuario: - users.repository.ts:95', error);
+			throw error;
+		}
+	}
 }
