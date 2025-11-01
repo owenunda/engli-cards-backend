@@ -1,23 +1,18 @@
 import { config } from 'dotenv';
 config();
 
-export interface envConfigInterface {
-	connectionString?: string;
-	ssl?: { require: boolean; rejectUnauthorized: boolean };
-	server_port: number;
-	jwt_secret: string;
-	frontend_urls: string[];
-}
-
 const env = process.env;
 
-export const envConfig = (): envConfigInterface => {
+export const envConfig = () => {
 	return {
-		connectionString: env.DATABASE_URL,
-		ssl: {
-			require: true,
-			rejectUnauthorized: false, // esto permite certificados autofirmados
-		},
+		// Database
+		DB_HOST: env.DB_HOST,
+		DB_PORT: env.DB_PORT,
+		DB_USER: env.DB_USER,
+		DB_PASSWORD: env.DB_PASSWORD,
+		DB_NAME: env.DB_NAME,
+
+		// Server
 		server_port: parseInt(env.PORT || '3000'),
 		jwt_secret: env.JWT_SECRET || 'changeme',
 		frontend_urls: (env.FRONTEND_URLS || '')

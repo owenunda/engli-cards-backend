@@ -4,79 +4,81 @@ import { envConfig } from '../config/envConfig';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
-  private pool: Pool;
+    private pool: Pool;
 
-  async onModuleInit() {
-    const config = envConfig();
+    constructor() {
+        const env = envConfig();
 
-    // 🧩 Forzamos SSL seguro (Supabase requiere esto)
-    this.pool = new Pool({
-      connectionString: config.connectionString,
-      ssl: {
-        rejectUnauthorized: false, // evita error SELF_SIGNED_CERT_IN_CHAIN
-      },
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-      max: 5,
-    });
+        // Configuración del pool usando solo las variables disponibles en envConfig
+        const poolConfig = {
+            host: env.DB_HOST,
+            port: Number(env.DB_PORT),
+            user: env.DB_USER,
+            password: env.DB_PASSWORD,
+            database: env.DB_NAME,
+            connectionTimeoutMillis: 5000,
+        };
 
-    // 🧠 Escucha errores inesperados del pool
-    this.pool.on('error', (err) => {
-      console.error('⚠️ Error inesperado en el pool de PostgreSQL: - database.service.ts:25', err);
-    });
-
-    try {
-      const client = await this.pool.connect();
-      console.log('✅ Conexión a PostgreSQL establecida correctamente - database.service.ts:30');
-      client.release();
-    } catch (error) {
-      console.error('❌ Error al conectar con PostgreSQL: - database.service.ts:33', error);
-      throw error;
+        this.pool = new Pool(poolConfig);
     }
 
-    // 🔁 Keep alive cada 60 s
-    setInterval(async () => {
-      try {
-        await this.pool.query('SELECT 1');
-      } catch (e) {
-        console.error('❌ Error en keepalive - database.service.ts:42', e);
-      }
-    }, 60000);
-  }
+    async onModuleInit() {
+        try {
+            console.log('🔌 Conectando a la base de datos... - database.service.ts:27');
+            // Intento de conexión para validar credenciales
+            const client = await this.pool.connect();
+            client.release();
+            console.log('✅ Conexión a DB exitosa - database.service.ts:31');
+        } catch (error) {
+            console.error('❌ Error al conectar con PostgreSQL: - database.service.ts:33', error);
+            throw error;
+        }
 
-  async onModuleDestroy() {
-    if (this.pool) {
-      await this.pool.end();
-      console.log('🔌 Conexión a PostgreSQL cerrada - database.service.ts:50');
+        // 🔁 Keep alive cada 60 s
+        setInterval(async () => {
+            try {
+                const client = await this.pool.connect();
+                await client.query('SELECT 1');
+                client.release();
+            } catch (e) {
+                console.error('❌ Error en keepalive de PostgreSQL: - database.service.ts:44', e);
+            }
+        }, 60000);
     }
-  }
 
-  async getClient(): Promise<PoolClient> {
-    return await this.pool.connect();
-  }
-
-  async query(text: string, params?: any[]): Promise<any> {
-    const client = await this.getClient();
-    try {
-      const result = await client.query(text, params);
-      return result;
-    } finally {
-      client.release();
+    async onModuleDestroy() {
+        if (this.pool) {
+            await this.pool.end();
+            console.log('🔌 Conexión a PostgreSQL cerrada - database.service.ts:52');
+        }
     }
-  }
 
-  async transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
-    const client = await this.getClient();
-    try {
-      await client.query('BEGIN');
-      const result = await callback(client);
-      await client.query('COMMIT');
-      return result;
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+    async getClient(): Promise<PoolClient> {
+        return await this.pool.connect();
     }
-  }
+
+    async query(text: string, params?: any[]): Promise<any> {
+        const client = await this.getClient();
+        try {
+            const result = await client.query(text, params);
+            return result;
+        } finally {
+            client.release();
+        }
+    }
+
+    async transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
+        const client = await this.getClient();
+        try {
+            await client.query('BEGIN');
+            const result = await callback(client);
+            await client.query('COMMIT');
+            return result;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 }
