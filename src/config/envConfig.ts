@@ -21,9 +21,9 @@ export const envConfig = () => {
 			.filter(Boolean),
 			node_env: env.NODE_ENV || 'development',
 			cloudinary: {
-				cloud_name: env.CLOUDINARY_CLOUD_NAME || '',
-				cloudinary_key: env.CLOUDINARY_API_KEY || '',
-				cloudinary_secret: env.CLOUDINARY_API_SECRET || '',
+				cloud_name: env.CLOUDINARY_NAME || '',
+				cloudinary_key: env.CLOUDINARY_KEY || '',
+				cloudinary_secret: env.CLOUDINARY_SECRET || '',
 			}
 	};
 };
