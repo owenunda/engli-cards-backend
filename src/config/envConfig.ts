@@ -19,6 +19,11 @@ export const envConfig = () => {
 			.split(',')
 			.map((s) => s.trim())
 			.filter(Boolean),
-			node_env: env.NODE_ENV || 'development'
+			node_env: env.NODE_ENV || 'development',
+			cloudinary: {
+				cloud_name: env.CLOUDINARY_CLOUD_NAME || '',
+				cloudinary_key: env.CLOUDINARY_API_KEY || '',
+				cloudinary_secret: env.CLOUDINARY_API_SECRET || '',
+			}
 	};
 };

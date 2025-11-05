@@ -29,4 +29,8 @@ export class UsersService {
   }
 
   // auth operations moved to AuthModule
+
+  updateUserProfileImage(userId: number, imageUrl: string) {
+    return this.usersRepository.updateUser(userId, { avatar_url: imageUrl });
+  }
 }
