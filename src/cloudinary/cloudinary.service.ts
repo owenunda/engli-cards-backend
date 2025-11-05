@@ -11,7 +11,7 @@ export class CloudinaryService {
     // sube una imagen a Cloudinary
     async uploadImage(file: Express.Multer.File) {
         return await this.cloudinary.uploader.upload(file.path, {
-            folder: 'engli-cards',
+            folder: 'engli-cards-profiles',
         });
     }
 }
