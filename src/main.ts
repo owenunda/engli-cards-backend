@@ -14,7 +14,12 @@ async function bootstrap() {
 
         // activar validación global de DTOs
         app.useGlobalPipes(new ValidationPipe({
-            whitelist: true
+            whitelist: true,
+            transform: true,
+            forbidNonWhitelisted: true,
+            transformOptions: {
+                enableImplicitConversion: true,
+            },
         }));
         console.log('✅ Tubería de validación global activada - main.ts:19');
 
