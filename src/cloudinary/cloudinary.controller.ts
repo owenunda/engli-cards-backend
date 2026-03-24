@@ -71,4 +71,54 @@ export class CloudinaryController {
         return { message: 'Imagen de perfil subida con éxito', imageUrl: img.secure_url };
     }
 
+    @Post('upload-flashcard')
+    @UseInterceptors(FileInterceptor('image'))
+    @ApiOperation({
+        summary: 'Subir imagen para una flashcard',
+        description: 'Sube una imagen a Cloudinary (carpeta engli-cards-flashcards) y devuelve la URL para ser usada al crear o actualizar una flashcard.',
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: 'Formulario con la imagen de la flashcard',
+        required: true,
+        schema: {
+            type: 'object',
+            properties: {
+                image: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Archivo de imagen',
+                },
+            },
+            required: ['image'],
+        },
+    })
+    @ApiOkResponse({
+        description: 'Imagen subida con éxito',
+        schema: {
+            type: 'object',
+            properties: {
+                message: { type: 'string', example: 'Imagen subida con éxito' },
+                imageUrl: { type: 'string', example: 'https://res.cloudinary.com/.../image.jpg' },
+            },
+        },
+    })
+    @ApiBadRequestResponse({
+        description: 'Archivo faltante',
+        schema: {
+            type: 'object',
+            properties: {
+                message: { type: 'string', example: 'Archivo no recibido' },
+            },
+        },
+    })
+    async uploadFlashcardImage(
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!file) throw new BadRequestException('Archivo no recibido');
+
+        const img = await this.cloudinaryService.uploadFlashcardImage(file);
+
+        return { message: 'Imagen subida con éxito', imageUrl: img.secure_url };
+    }
 }

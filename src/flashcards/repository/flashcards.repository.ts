@@ -101,7 +101,34 @@ export class FlashcardsRepository {
     } catch (error) {
       throw new Error('Error fetching user flashcards');
     }
-
   }
 
+  async deleteFlashcard(userFlashcardId: number, userId: number) {
+    try {
+      return this.databaseService.transaction(async (client) => {
+        // 1. Obtener el word_id asociado antes de borrar
+        const findQuery = `SELECT word_id FROM user_flashcards WHERE id = $1 AND user_id = $2`;
+        const findRes = await client.query(findQuery, [userFlashcardId, userId]);
+
+        if (findRes.rows.length === 0) {
+          throw new Error('Flashcard not found or not owned by user');
+        }
+
+        const wordId = findRes.rows[0].word_id;
+
+        // 2. Borrar de deck_flashcards (cascada manual si no está en BD, pero lo hacemos por seguridad)
+        await client.query(`DELETE FROM deck_flashcards WHERE user_flashcard_id = $1`, [userFlashcardId]);
+
+        // 3. Borrar de user_flashcards
+        await client.query(`DELETE FROM user_flashcards WHERE id = $1 AND user_id = $2`, [userFlashcardId, userId]);
+
+        // 4. Borrar de words (ya que cada flashcard tiene su propia word en este sistema)
+        await client.query(`DELETE FROM words WHERE id = $1`, [wordId]);
+
+        return { message: 'Flashcard deleted successfully' };
+      });
+    } catch (error) {
+      throw new Error('Error deleting flashcard: ' + error.message);
+    }
+  }
 }

@@ -48,4 +48,18 @@ export class FlashcardsController {
     }
     return this.flashcardsService.updateFlashcard(Number(id), Number(userId), updateDto);
   }
+
+  @Delete('/:id')
+  @ApiOperation({ summary: 'Eliminar flashcard por ID' })
+  @ApiResponse({ status: 200, description: 'Flashcard deleted successfully.' })
+  @ApiResponse({ status: 404, description: 'Flashcard not found.' })
+  async deleteFlashcard(
+    @Param('id') id: string,
+    @Body('userId') userId: number
+  ) {
+    if (!userId) {
+      throw new Error('userId is required');
+    }
+    return this.flashcardsService.deleteFlashcard(Number(id), Number(userId));
+  }
 }

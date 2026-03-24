@@ -22,4 +22,7 @@ export class FlashcardsService {
     return this.flashcardsRepository.updateFlashcard(userFlashcardId, userId, updateDto);
   }
 
+  async deleteFlashcard(userFlashcardId: number, userId: number) {
+    return this.flashcardsRepository.deleteFlashcard(userFlashcardId, userId);
+  }
 }

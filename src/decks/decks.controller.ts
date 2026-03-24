@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { DecksService } from './decks.service';
 import { CreateDecksDto, Decks, DecksWithFlashcards } from './interfaces/decks.interface';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AllInfoFlashcard } from '../flashcards/interface/flashcard.interface';
 
 
 @Controller('decks')
@@ -25,6 +26,14 @@ export class DecksController {
     return this.decksService.getAllDecksByUserId(Number(userId));
   }
 
+  @Get('/:deckId/flashcards')
+  @ApiOperation({ summary: 'Obtener todas las flashcards de un mazo' })
+  @ApiResponse({ status: 200, description: 'Flashcards obtenidas exitosamente.', type: [AllInfoFlashcard] })
+  @ApiResponse({ status: 404, description: 'No se encontraron flashcards.' })
+  async getFlashcardsByDeckId(@Param('deckId') deckId: string): Promise<AllInfoFlashcard[]> {
+    return this.decksService.getFlashcardsByDeckId(Number(deckId));
+  }
+
   // DELETE /decks?deckId=3&userId=1
   @Delete()
   @ApiOperation({ summary: 'Eliminar un mazo por ID' })
@@ -36,5 +45,17 @@ export class DecksController {
     @Query('userId') userId: string
   ): Promise<string> {
     return this.decksService.deleteDeckById(Number(deckId), Number(userId));
+  }
+
+  @Patch('/:deckId')
+  @ApiOperation({ summary: 'Actualizar nombre de un mazo por ID' })
+  @ApiResponse({ status: 200, description: 'Nombre de mazo actualizado exitosamente.', type: Decks })
+  @ApiResponse({ status: 404, description: 'Mazo no encontrado.' })
+  async updateDeckName(
+    @Param('deckId') deckId: string,
+    @Body('name') name: string,
+    @Body('userId') userId: string
+  ): Promise<Decks> {
+    return this.decksService.updateDeckName(Number(deckId), Number(userId), name);
   }
 }

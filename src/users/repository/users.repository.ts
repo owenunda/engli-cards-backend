@@ -99,4 +99,14 @@ export class UsersRepository {
 			throw error;
 		}
 	}
+
+	async updatePassword(id: number, hashed: string): Promise<void> {
+		try {
+			const query = `UPDATE users SET password = $1 WHERE id = $2`;
+			await this.databaseService.query(query, [hashed, id]);
+		} catch (error) {
+			console.error('Error al actualizar la contraseña - users.repository.ts', error);
+			throw error;
+		}
+	}
 }
