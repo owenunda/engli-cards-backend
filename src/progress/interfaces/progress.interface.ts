@@ -70,4 +70,7 @@ export class CompleteQuizResponse{
     totals: Totals;
     @ApiProperty()
     session: Pick<QuizSession, 'id' | 'completed_at'>;
+
+    @ApiProperty({ required: false })
+    unlockedAchievements?: any[];
 }

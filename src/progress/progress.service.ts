@@ -62,10 +62,16 @@ export class  ProgressService {
             });
 
             const totals = this.addLevelComputed(totalsRow);
+
+            // Logros Dinámicos
+            await this.progressRepository.initAchievements(client, userId);
+            const unlockedAchievements = await this.evaluateAchievements(client, userId, dto, totalsRow, finishedAt, streakCurrent, totals);
+
             return {
                 pointsEarned,
                 totals,
                 session,
+                unlockedAchievements,
             };
         });
     }
@@ -79,6 +85,10 @@ export class  ProgressService {
     async getQuizSessions(userId: number, days = 30) {
         if (days <= 0) days = 30;
         return this.progressRepository.getSessions(userId, days);
+    }
+
+    async getAchievements(userId: number) {
+        return this.progressRepository.getAchievements(userId);
     }
 
     // Helpers
@@ -128,4 +138,72 @@ export class  ProgressService {
         return Math.round((b - a) / 86400000);
     }
 
+    private async evaluateAchievements(client: any, userId: number, dto: CompleteQuizDto, totalsRow: any, finishedAt: Date, streakCurrent: number, totals: Totals) {
+        // Obtener estado anterior
+        const beforeState = await this.progressRepository.getAllUserAchievementsTx(client, userId);
+        const beforeMap = new Map(beforeState.map(a => [a.achievement_code, a.is_completed]));
+
+        // 1. FIRST_QUIZ
+        await this.progressRepository.updateAchievement(client, userId, 'FIRST_QUIZ', 1, true);
+
+        // 2. STREAK_7
+        const streak7Completed = streakCurrent >= 7;
+        await this.progressRepository.updateAchievement(client, userId, 'STREAK_7', Math.min(streakCurrent, 7), streak7Completed);
+
+        // 3. STREAK_30
+        const streak30Completed = streakCurrent >= 30;
+        await this.progressRepository.updateAchievement(client, userId, 'STREAK_30', Math.min(streakCurrent, 30), streak30Completed);
+
+        // 4. LEVEL_5
+        const level5Completed = totals.level >= 5;
+        await this.progressRepository.updateAchievement(client, userId, 'LEVEL_5', Math.min(totals.level, 5), level5Completed);
+
+        // 5. CORRECT_100
+        const totalCorrect = Number(totalsRow.correct_answers_total);
+        const correct100Completed = totalCorrect >= 100;
+        await this.progressRepository.updateAchievement(client, userId, 'CORRECT_100', Math.min(totalCorrect, 100), correct100Completed);
+
+        // 6. EARLY_BIRD_1
+        const hour = finishedAt.getHours();
+        if (hour < 8) {
+            await this.progressRepository.updateAchievement(client, userId, 'EARLY_BIRD_1', 1, true);
+        }
+
+        // 7. NIGHT_OWL_3
+        if (hour >= 23 || hour < 4) {
+            const no3 = await this.progressRepository.getUserAchievementByCode(client, userId, 'NIGHT_OWL_3');
+            if (no3 && !no3.is_completed) {
+                const newVal = Math.min((no3.current_value || 0) + 1, 3);
+                await this.progressRepository.updateAchievement(client, userId, 'NIGHT_OWL_3', newVal, newVal >= 3);
+            }
+        }
+
+        // 8. PERFECT_LESSONS_5
+        const pl5 = await this.progressRepository.getUserAchievementByCode(client, userId, 'PERFECT_LESSONS_5');
+        if (pl5 && !pl5.is_completed) {
+            if (dto.correctAnswers === dto.totalQuestions && dto.totalQuestions > 0) {
+                const newVal = Math.min((pl5.current_value || 0) + 1, 5);
+                await this.progressRepository.updateAchievement(client, userId, 'PERFECT_LESSONS_5', newVal, newVal >= 5);
+            } else {
+                await this.progressRepository.updateAchievement(client, userId, 'PERFECT_LESSONS_5', 0, false);
+            }
+        }
+
+        // Obtener estado posterior y comparar
+        const afterState = await this.progressRepository.getAllUserAchievementsTx(client, userId);
+        const newlyUnlocked: any[] = [];
+
+        for (const after of afterState) {
+            const wasCompleted = beforeMap.get(after.achievement_code);
+            if (!wasCompleted && after.is_completed) {
+                newlyUnlocked.push({
+                    title: after.title,
+                    description: after.description,
+                    icon_type: after.icon_type,
+                });
+            }
+        }
+
+        return newlyUnlocked;
+    }
 }

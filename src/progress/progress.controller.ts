@@ -38,4 +38,10 @@ export class ProgressController {
     getSessions(@Param('id') id: string, @Query('days') days?: string) {
         return this.progressService.getQuizSessions(Number(id), days ? Number(days) : undefined);
     }
+
+    @Get('users/:id/achievements')
+    @ApiOperation({ summary: 'Obtener el progreso y logros del usuario' })
+    getAchievements(@Param('id') id: string) {
+        return this.progressService.getAchievements(Number(id));
+    }
 }

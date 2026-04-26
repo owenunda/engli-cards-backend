@@ -87,4 +87,70 @@ export class ProgressRepository{
         const res = await this.databaseService.query(q, [userId, days]);
         return res.rows;
     }
+
+    async getAchievements(userId: number) {
+        const q = `
+            SELECT 
+                a.id as achievement_id,
+                a.title,
+                a.description,
+                a.target_value,
+                a.icon_type,
+                a.achievement_code,
+                COALESCE(ua.current_value, 0) as current_value,
+                COALESCE(ua.is_completed, false) as is_completed,
+                ua.unlocked_at
+            FROM achievements a
+            LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1
+            ORDER BY a.id ASC
+        `;
+        const res = await this.databaseService.query(q, [userId]);
+        return res.rows;
+    }
+
+    async initAchievements(client: any, userId: number) {
+        const q = `
+            INSERT INTO user_achievements (user_id, achievement_id, current_value)
+            SELECT $1, id, 0
+            FROM achievements
+            ON CONFLICT (user_id, achievement_id) DO NOTHING
+        `;
+        await client.query(q, [userId]);
+    }
+
+    async updateAchievement(client: any, userId: number, achievementCode: string, newValue: number, isCompleted: boolean) {
+        const q = `
+            UPDATE user_achievements ua
+            SET current_value = $1,
+                is_completed = $2,
+                unlocked_at = CASE WHEN $2 = true AND ua.is_completed = false THEN NOW() ELSE ua.unlocked_at END,
+                updated_at = NOW()
+            FROM achievements a
+            WHERE a.id = ua.achievement_id 
+              AND a.achievement_code = $3 
+              AND ua.user_id = $4
+        `;
+        await client.query(q, [newValue, isCompleted, achievementCode, userId]);
+    }
+
+    async getUserAchievementByCode(client: any, userId: number, achievementCode: string) {
+        const q = `
+            SELECT ua.current_value, ua.is_completed, a.target_value
+            FROM user_achievements ua
+            JOIN achievements a ON ua.achievement_id = a.id
+            WHERE ua.user_id = $1 AND a.achievement_code = $2
+        `;
+        const res = await client.query(q, [userId, achievementCode]);
+        return res.rows[0];
+    }
+
+    async getAllUserAchievementsTx(client: any, userId: number) {
+        const q = `
+            SELECT a.achievement_code, a.title, a.icon_type, a.description, ua.is_completed
+            FROM achievements a
+            LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1
+        `;
+        const res = await client.query(q, [userId]);
+        return res.rows;
+    }
 }
