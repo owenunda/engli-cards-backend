@@ -1,0 +1,16 @@
+{
+  "en": [
+    "Table", "Chair", "Computer", "Window", "Door", "Street", "Park", "School", "Library", "Friend",
+    "Family", "Morning", "Night", "Always", "Never", "Beautiful", "Quickly", "Simple", "Difficult", "Knowledge",
+    "Journey", "Experience", "Opportunity", "Success", "Challenge", "Growth", "Future", "History", "Nature", "Health",
+    "Music", "Cinema", "Travel", "Culture", "Science", "Business", "Language", "Message", "Picture", "Sound",
+    "Feeling", "Thought", "Decision", "Action", "Result", "Change", "Power", "Freedom", "Peace", "World"
+  ],
+  "es": [
+    "Mesa", "Silla", "Computadora", "Ventana", "Puerta", "Calle", "Parque", "Escuela", "Biblioteca", "Amigo",
+    "Familia", "Mañana", "Noche", "Siempre", "Nunca", "Hermoso", "Rápido", "Simple", "Difícil", "Conocimiento",
+    "Viaje", "Experiencia", "Oportunidad", "Éxito", "Desafío", "Crecimiento", "Futuro", "Historia", "Naturaleza", "Salud",
+    "Música", "Cine", "Viajar", "Cultura", "Ciencia", "Negocio", "Idioma", "Mensaje", "Imagen", "Sonido",
+    "Sentimiento", "Pensamiento", "Decisión", "Acción", "Resultado", "Cambio", "Poder", "Libertad", "Paz", "Mundo"
+  ]
+}

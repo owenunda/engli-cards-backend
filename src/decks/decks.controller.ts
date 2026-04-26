@@ -58,4 +58,12 @@ export class DecksController {
   ): Promise<Decks> {
     return this.decksService.updateDeckName(Number(deckId), Number(userId), name);
   }
+
+  @Get('/:deckId/quiz')
+  @ApiOperation({ summary: 'Generar un quiz de 5 preguntas basado en un mazo' })
+  @ApiResponse({ status: 200, description: 'Quiz generado exitosamente.' })
+  @ApiResponse({ status: 400, description: 'El mazo no tiene suficientes tarjetas.' })
+  async generateQuizFromDeck(@Param('deckId') deckId: string) {
+    return this.decksService.generateQuizFromDeck(Number(deckId));
+  }
 }
