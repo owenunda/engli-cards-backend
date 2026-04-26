@@ -12,6 +12,15 @@ export class CreateDecksDto {
   @ApiProperty({ required: true })
   @IsNumber()
   user_id: number;
+
+  @ApiProperty({ required: false })
+  is_system?: boolean;
+
+  @ApiProperty({ required: false })
+  order_index?: number;
+
+  @ApiProperty({ required: false })
+  min_accuracy?: number;
 }
 
 export class Decks {
@@ -21,7 +30,11 @@ export class Decks {
   @ApiProperty()
   name: string;
   @ApiProperty()
-  user_id: number;
+  is_system: boolean;
+  @ApiProperty()
+  order_index: number;
+  @ApiProperty()
+  min_accuracy: number;
   @ApiProperty()
   created_at: Date;
   @ApiProperty()
@@ -37,7 +50,14 @@ export class DecksWithFlashcards {
   @ApiProperty()
   user_id: number;
   @ApiProperty({ type: [AllInfoFlashcard] })
+  @ApiProperty()
   flashcards: AllInfoFlashcard[];
+  @ApiProperty()
+  is_system: boolean;
+  @ApiProperty()
+  order_index: number;
+  @ApiProperty()
+  min_accuracy: number;
   @ApiProperty()
   created_at: Date;
   @ApiProperty()

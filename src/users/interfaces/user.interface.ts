@@ -19,6 +19,11 @@ export class User {
 	@IsNotEmpty()
 	avatar_url?: string;
 
+	@ApiProperty({required: false})
+	@IsOptional()
+	@IsString()
+	role?: string;
+
 	password?: string;
 	created_at: Date;
 	updated_at: Date;
@@ -43,6 +48,11 @@ export class CreateUserDto {
 	@MinLength(4)
 	@IsNotEmpty()
 	password: string;
+
+	@ApiProperty({required: false})
+	@IsOptional()
+	@IsString()
+	role?: string;
 }
 
 export class UpdateUserDto extends PartialType(User) {}

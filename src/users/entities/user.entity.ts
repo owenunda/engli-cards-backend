@@ -12,6 +12,8 @@ export class UserEntity implements UserWithoutPassword {
   @ApiProperty()
   avatar_url?: string;
   @ApiProperty()
+  role?: string;
+  @ApiProperty()
   created_at: Date;
   @ApiProperty()
   updated_at: Date;

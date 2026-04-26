@@ -37,7 +37,7 @@ export class AuthService {
     const match = await bcrypt.compare(userDto.password, user.password);
     if (!match) throw new UnauthorizedException('Invalid credentials');
 
-    const token = jwt.sign({ sub: user.id, name: user.name }, envConfig().jwt_secret, { expiresIn: '1h' });
+    const token = jwt.sign({ sub: user.id, name: user.name, role: user.role }, envConfig().jwt_secret, { expiresIn: '1h' });
     delete user.password;
     return { user, token };
   }

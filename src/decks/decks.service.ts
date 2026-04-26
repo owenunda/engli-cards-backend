@@ -16,12 +16,16 @@ export class DecksService {
     async getAllDecksByUserId(userId: number): Promise<DecksWithFlashcards[]> {
         return this.decksRepository.getAllDecksByUserId(userId);
     }
+
+    async getAllDecks(): Promise<DecksWithFlashcards[]> {
+        return this.decksRepository.getAllDecks();
+    }
     async deleteDeckById(deckId: number, userId: number): Promise<string> {
         return this.decksRepository.deleteDeckById(deckId, userId);
     }
 
-    async updateDeckName(deckId: number, userId: number, name: string): Promise<Decks> {
-        return this.decksRepository.updateDeckName(deckId, userId, name);
+    async updateDeck(deckId: number, userId: number, name: string, orderIndex?: number, minAccuracy?: number): Promise<Decks> {
+        return this.decksRepository.updateDeck(deckId, userId, name, orderIndex, minAccuracy);
     }
 
     async getFlashcardsByDeckId(deckId: number): Promise<AllInfoFlashcard[]> {

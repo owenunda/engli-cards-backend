@@ -18,6 +18,13 @@ export class DecksController {
     return this.decksService.createDeck(createDecksDto);
   }
 
+  @Get('/all')
+  @ApiOperation({ summary: 'Obtener todos los mazos del sistema (Admin)' })
+  @ApiResponse({ status: 200, description: 'Todos los mazos obtenidos.', type: [DecksWithFlashcards] })
+  async getAllDecks(): Promise<DecksWithFlashcards[]> {
+    return this.decksService.getAllDecks();
+  }
+
   @Get('/:userId')
   @ApiOperation({ summary: 'Obtener todos los mazos de un usuario' })
   @ApiResponse({ status: 200, description: 'Mazos obtenidos exitosamente.', type: [DecksWithFlashcards] })
@@ -48,15 +55,17 @@ export class DecksController {
   }
 
   @Patch('/:deckId')
-  @ApiOperation({ summary: 'Actualizar nombre de un mazo por ID' })
-  @ApiResponse({ status: 200, description: 'Nombre de mazo actualizado exitosamente.', type: Decks })
+  @ApiOperation({ summary: 'Actualizar un mazo por ID' })
+  @ApiResponse({ status: 200, description: 'Mazo actualizado exitosamente.', type: Decks })
   @ApiResponse({ status: 404, description: 'Mazo no encontrado.' })
-  async updateDeckName(
+  async updateDeck(
     @Param('deckId') deckId: string,
     @Body('name') name: string,
-    @Body('userId') userId: string
+    @Body('userId') userId: string,
+    @Body('order_index') orderIndex?: number,
+    @Body('min_accuracy') minAccuracy?: number
   ): Promise<Decks> {
-    return this.decksService.updateDeckName(Number(deckId), Number(userId), name);
+    return this.decksService.updateDeck(Number(deckId), Number(userId), name, orderIndex, minAccuracy);
   }
 
   @Get('/:deckId/quiz')
