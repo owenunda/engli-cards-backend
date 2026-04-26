@@ -50,6 +50,7 @@ export class  ProgressService {
                 localDate,
                 streakCurrent,
                 streakBest,
+                timeSpentSeconds: dto.timeSpentSeconds || 0,
             });
 
             const session = await this.progressRepository.insertQuizSession(client, {
@@ -59,6 +60,7 @@ export class  ProgressService {
                 correctAnswers: dto.correctAnswers,
                 pointsAwarded: pointsEarned,
                 completedAt: finishedAt,
+                timeSpentSeconds: dto.timeSpentSeconds || 0,
             });
 
             const totals = this.addLevelComputed(totalsRow);
@@ -123,6 +125,7 @@ export class  ProgressService {
             quizzes_completed: row.quizzes_completed,
             correct_answers_total: row.correct_answers_total,
             wrong_answers_total: row.wrong_answers_total,
+            study_time_total_seconds: row.study_time_total_seconds || 0,
             level,
             next_level_points,
         };

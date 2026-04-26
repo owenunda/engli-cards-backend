@@ -36,6 +36,10 @@ export class Totals{
     @ApiProperty()
     @IsNumber()
     next_level_points: number;
+
+    @ApiProperty()
+    @IsNumber()
+    study_time_total_seconds: number;
 }
 
 export class QuizSession{

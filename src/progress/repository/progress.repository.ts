@@ -8,7 +8,7 @@ export class ProgressRepository{
     async selectUserForUpdate(client: any, userId: number){
         const q = `
             SELECT id, points_total, streak_current, streak_best, last_activity_date,
-                   quizzes_completed, correct_answers_total, wrong_answers_total
+                   quizzes_completed, correct_answers_total, wrong_answers_total, study_time_total_seconds
             FROM users
             WHERE id = $1
             FOR UPDATE
@@ -25,6 +25,7 @@ export class ProgressRepository{
         localDate: string; // 'YYYY-MM-DD'
         streakCurrent: number;
         streakBest: number;
+        timeSpentSeconds: number;
     }) {
         const q = `
         UPDATE users
@@ -34,14 +35,15 @@ export class ProgressRepository{
                 wrong_answers_total = wrong_answers_total + $4,
                 streak_current = $5,
                 streak_best = $6,
-                last_activity_date = $7
+                last_activity_date = $7,
+                study_time_total_seconds = study_time_total_seconds + $8
             WHERE id = $1
             RETURNING points_total, streak_current, streak_best, quizzes_completed,
-                      correct_answers_total, wrong_answers_total
+                      correct_answers_total, wrong_answers_total, study_time_total_seconds
         `;
         const vals = [
             p.userId, p.pointsEarned, p.correctAnswers, p.wrongAnswers,
-            p.streakCurrent, p.streakBest, p.localDate,
+            p.streakCurrent, p.streakBest, p.localDate, p.timeSpentSeconds
         ];
         const res = await client.query(q, vals);
         return res.rows[0];
@@ -55,20 +57,21 @@ export class ProgressRepository{
         correctAnswers: number;
         pointsAwarded: number;
         completedAt: Date;
+        timeSpentSeconds: number;
     }) {
         const q = `
-            INSERT INTO user_quiz_sessions (user_id, deck_id, total_questions, correct_answers, points_awarded, completed_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO user_quiz_sessions (user_id, deck_id, total_questions, correct_answers, points_awarded, completed_at, time_spent_seconds)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id, completed_at
         `;
-        const res = await client.query(q, [s.userId, s.deckId ?? null, s.totalQuestions, s.correctAnswers, s.pointsAwarded, s.completedAt]);
+        const res = await client.query(q, [s.userId, s.deckId ?? null, s.totalQuestions, s.correctAnswers, s.pointsAwarded, s.completedAt, s.timeSpentSeconds]);
         return res.rows[0];
     }
 
     async getTotals(userId: number) {
         const q = `
             SELECT points_total, streak_current, streak_best, quizzes_completed,
-                   correct_answers_total, wrong_answers_total
+                   correct_answers_total, wrong_answers_total, study_time_total_seconds
             FROM users
             WHERE id = $1
         `;
@@ -78,7 +81,7 @@ export class ProgressRepository{
 
     async getSessions(userId: number, days: number) {
         const q = `
-            SELECT id, deck_id, total_questions, correct_answers, points_awarded, completed_at
+            SELECT id, deck_id, total_questions, correct_answers, points_awarded, completed_at, time_spent_seconds
             FROM user_quiz_sessions
             WHERE user_id = $1
               AND completed_at >= NOW() - ($2 || ' days')::INTERVAL

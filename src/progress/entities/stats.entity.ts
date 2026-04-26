@@ -17,4 +17,6 @@ export class TotalsEntity{
     correct_answers_total: number;
     @ApiProperty()
     wrong_answers_total: number;
+    @ApiProperty()
+    study_time_total_seconds: number;
 }

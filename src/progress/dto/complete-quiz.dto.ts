@@ -32,4 +32,10 @@ export class CompleteQuizDto {
 	@IsOptional()
 	@IsInt({ message: 'timezoneOffsetMinutes debe ser un número entero' })
 	timezoneOffsetMinutes?: number;
+
+	@ApiProperty({ description: 'Tiempo en segundos invertido en el quiz (opcional)', required: false })
+	@IsOptional()
+	@IsInt({ message: 'timeSpentSeconds debe ser un número entero' })
+	@Min(0, { message: 'timeSpentSeconds no puede ser negativo' })
+	timeSpentSeconds?: number;
 }
