@@ -1,6 +1,6 @@
 import { Provider } from '@nestjs/common';
 import { v2 as Cloudinary } from 'cloudinary';
-import { envConfig } from 'src/config/envConfig';
+import { envConfig } from '../config/envConfig';
 
 
 export const CLOUDINARY = 'CLOUDINARY';

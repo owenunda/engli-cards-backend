@@ -88,7 +88,6 @@ export class DecksRepository {
                                 WHERE uqs.user_id = $1 
                                   AND dprev.is_system = true 
                                   AND dprev.order_index = d.order_index - 1
-                                  AND (uqs.correct_answers::float / uqs.total_questions::float) >= dprev.min_accuracy
                             )
                         END,
                         false
@@ -168,7 +167,8 @@ export class DecksRepository {
         return 'Deck and associated flashcards deleted successfully';
       });
     } catch (error) {
-      throw new Error('Error deleting deck: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error('Error deleting deck: ' + errorMessage);
     }
   }
 
@@ -189,7 +189,8 @@ export class DecksRepository {
       }
       return result.rows[0];
     } catch (error) {
-      throw new Error('Error updating deck: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error('Error updating deck: ' + errorMessage);
     }
   }
 
@@ -214,6 +215,77 @@ export class DecksRepository {
       return result.rows;
     } catch (error) {
       throw new Error('Error fetching flashcards for deck');
+    }
+  }
+
+  async initializeSystemDecks(): Promise<{ message: string; decksCount: number }> {
+    try {
+      const systemDecks = [
+        { name: 'Greetings', order_index: 1, min_accuracy: 0.9 },
+        { name: 'Fruits', order_index: 2, min_accuracy: 0.9 },
+        { name: 'Family', order_index: 3, min_accuracy: 0.9 },
+        { name: 'Trabajo', order_index: 4, min_accuracy: 0.9 },
+        { name: 'Escuela', order_index: 5, min_accuracy: 0.9 },
+        { name: 'Viajes', order_index: 6, min_accuracy: 0.9 },
+      ];
+
+      // Buscar o crear un usuario de sistema
+      let systemUserId: number;
+      const checkSystemUserQuery = 'SELECT id FROM users WHERE email = $1';
+      const checkSystemUserResult = await this.databaseService.query(checkSystemUserQuery, ['system@engli.cards']);
+    
+      if (checkSystemUserResult.rowCount > 0) {
+        systemUserId = checkSystemUserResult.rows[0].id;
+      } else {
+        // Crear usuario de sistema si no existe
+        const createSystemUserQuery = `
+          INSERT INTO users (name, email, password, role)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id
+        `;
+        const createSystemUserResult = await this.databaseService.query(createSystemUserQuery, [
+          'System User',
+          'system@engli.cards',
+          'system_user_password_not_used',
+          'admin'
+        ]);
+        systemUserId = createSystemUserResult.rows[0].id;
+      }
+    
+      let createdCount = 0;
+
+      for (const deck of systemDecks) {
+        const checkQuery = 'SELECT id FROM decks WHERE name = $1 AND is_system = true';
+        const checkResult = await this.databaseService.query(checkQuery, [deck.name]);
+
+        if (checkResult.rowCount === 0) {
+          // Create the deck if it doesn't exist
+          const insertQuery = `
+            INSERT INTO decks (name, user_id, is_system, order_index, min_accuracy, created_at, updated_at)
+            VALUES ($1, $2, true, $3, $4, NOW(), NOW())
+            RETURNING id
+          `;
+          await this.databaseService.query(insertQuery, [deck.name, systemUserId, deck.order_index, deck.min_accuracy]);
+          createdCount++;
+        } else {
+          // Update existing deck to ensure correct order_index and min_accuracy
+          const updateQuery = `
+            UPDATE decks 
+            SET order_index = $2, min_accuracy = $3, is_system = true, updated_at = NOW()
+            WHERE name = $1
+          `;
+          await this.databaseService.query(updateQuery, [deck.name, deck.order_index, deck.min_accuracy]);
+        }
+      }
+
+      return { 
+        message: `System decks initialized successfully. Created: ${createdCount}, Updated: ${systemDecks.length - createdCount}`, 
+        decksCount: systemDecks.length 
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error initializing system decks:', errorMessage);
+      throw new Error('Error initializing system decks: ' + errorMessage);
     }
   }
 }

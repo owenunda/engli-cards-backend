@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from '../database/database.service';
 import { ProgressRepository } from './repository/progress.repository';
 import { CompleteQuizDto, CompleteQuizResponse, Totals } from './interfaces/progress.interface';
 

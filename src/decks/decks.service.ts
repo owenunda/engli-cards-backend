@@ -95,4 +95,8 @@ export class DecksService {
         const spanishChars = /[áéíóúñÁÉÍÓÚÑ]/;
         return spanishChars.test(text) ? 'es' : 'en';
     }
-}
+
+    async initializeSystemDecks() {
+        return this.decksRepository.initializeSystemDecks();
+        }
+    }
