@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AllInfoFlashcard } from '../../flashcards/interface/flashcard.interface';
-import { IsEmail, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
 
 
 export class CreateDecksDto {
@@ -14,12 +14,18 @@ export class CreateDecksDto {
   user_id: number;
 
   @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
   is_system?: boolean;
 
   @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
   order_index?: number;
 
   @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
   min_accuracy?: number;
 }
 

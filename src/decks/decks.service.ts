@@ -54,17 +54,18 @@ export class DecksService {
         const selectedCards = shuffled.slice(0, 5);
 
         const quiz = selectedCards.map((card, index) => {
-            const isWordInEnglish = this.detectLanguage(card.word) === 'en';
-            const correctAnswer = card.translation; // La respuesta es la traducción
+            // Regla fija solicitada: arriba espanol, opciones en ingles.
+            const questionText = card.translation;
+            const correctAnswer = card.word;
 
             // Generar distractores
             // 1. Intentar usar otras tarjetas del mismo mazo
             let potentialDistractors = flashcards
-                .filter(f => f.id !== card.id)
-                .map(f => f.translation);
+                .filter(f => !(f.word === card.word && f.translation === card.translation))
+                .map(f => f.word);
 
-            // 2. Si no hay suficientes, usar el pool de JSON
-            const fallbackPool = isWordInEnglish ? distractorsPool.es : distractorsPool.en;
+            // 2. Si no hay suficientes, usar solo fallback en ingles
+            const fallbackPool = distractorsPool.en;
             potentialDistractors = [...new Set([...potentialDistractors, ...fallbackPool])];
             
             // 3. Mezclar y tomar 3
@@ -81,19 +82,12 @@ export class DecksService {
 
             return {
                 id: card.id || index + 1,
-                question: card.word,
+                question: questionText,
                 options: options.sort(() => 0.5 - Math.random()) // Barajar opciones
             };
         });
 
         return quiz;
-    }
-
-    private detectLanguage(text: string): 'en' | 'es' {
-        // Lógica simple por ahora, se podría mejorar
-        // Asumimos que si no hay caracteres especiales como ñ o tildes, es inglés (o simplificamos)
-        const spanishChars = /[áéíóúñÁÉÍÓÚÑ]/;
-        return spanishChars.test(text) ? 'es' : 'en';
     }
 
     async initializeSystemDecks() {

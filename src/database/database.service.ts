@@ -29,6 +29,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             const client = await this.pool.connect();
             client.release();
             console.log('✅ Conexión a DB exitosa - database.service.ts:31');
+
+            await this.ensureStudyTimeColumns();
         } catch (error) {
             console.error('❌ Error al conectar con PostgreSQL: - database.service.ts:33', error);
             throw error;
@@ -80,5 +82,20 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         } finally {
             client.release();
         }
+    }
+
+    private async ensureStudyTimeColumns() {
+        const alterUsers = `
+            ALTER TABLE IF EXISTS users
+            ADD COLUMN IF NOT EXISTS study_time_total_seconds INTEGER DEFAULT 0;
+        `;
+
+        const alterSessions = `
+            ALTER TABLE IF EXISTS user_quiz_sessions
+            ADD COLUMN IF NOT EXISTS time_spent_seconds INTEGER DEFAULT 0;
+        `;
+
+        await this.query(alterUsers);
+        await this.query(alterSessions);
     }
 }
