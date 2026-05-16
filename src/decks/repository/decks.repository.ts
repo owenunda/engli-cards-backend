@@ -69,7 +69,7 @@ export class DecksRepository {
     }
   }
 
-  async getAllDecksByUserId(userId: number): Promise<DecksWithFlashcards[]> {
+  async getAllDecksByUserId(userId: number, includeSystem: boolean = true): Promise<DecksWithFlashcards[]> {
     try {
       const query = `
                 SELECT
@@ -118,7 +118,7 @@ export class DecksRepository {
                 LEFT JOIN deck_flashcards df ON df.deck_id = d.id
                 LEFT JOIN user_flashcards uf ON df.user_flashcard_id = uf.id
                 LEFT JOIN words w ON uf.word_id = w.id
-                WHERE d.user_id = $1 OR d.is_system = true
+                WHERE d.user_id = $1 ${includeSystem ? 'OR d.is_system = true' : ''}
                 GROUP BY d.id, d.name, d.is_system, d.order_index, d.min_accuracy
                 ORDER BY d.is_system DESC, d.order_index ASC, d.name ASC;
       `;

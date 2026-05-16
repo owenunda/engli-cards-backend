@@ -13,8 +13,8 @@ export class DecksService {
         return this.decksRepository.createDeck(createDecksDto);
     }
 
-    async getAllDecksByUserId(userId: number): Promise<DecksWithFlashcards[]> {
-        return this.decksRepository.getAllDecksByUserId(userId);
+    async getAllDecksByUserId(userId: number, includeSystem: boolean = true): Promise<DecksWithFlashcards[]> {
+        return this.decksRepository.getAllDecksByUserId(userId, includeSystem);
     }
 
     async getAllDecks(): Promise<DecksWithFlashcards[]> {

@@ -39,8 +39,12 @@ export class DecksController {
   @ApiOperation({ summary: 'Obtener todos los mazos de un usuario' })
   @ApiResponse({ status: 200, description: 'Mazos obtenidos exitosamente.', type: [DecksWithFlashcards] })
   @ApiResponse({ status: 404, description: 'No se encontraron mazos.' })
-  async getAllDecksByUserId(@Param('userId') userId: string): Promise<DecksWithFlashcards[]> {
-    return this.decksService.getAllDecksByUserId(Number(userId));
+  async getAllDecksByUserId(
+    @Param('userId') userId: string,
+    @Query('includeSystem') includeSystem?: string
+  ): Promise<DecksWithFlashcards[]> {
+    const include = includeSystem === undefined ? true : includeSystem === 'true';
+    return this.decksService.getAllDecksByUserId(Number(userId), include);
   }
 
   @Get(':deckId/flashcards')
