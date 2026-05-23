@@ -8,7 +8,7 @@ export class QuizSessionEntity{
     @ApiProperty()
     total_questions: number;
     @ApiProperty()
-    correct_ansswers: number;
+    correct_answers: number;
     @ApiProperty()
     points_awarded: number;
     @ApiProperty()

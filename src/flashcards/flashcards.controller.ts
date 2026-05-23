@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, UnauthorizedException } from '@nestjs/common';
 import { FlashcardsService } from './flashcards.service';
 import { AllInfoFlashcard, CreateFlashcardDto, UpdateFlashcardDto, UserFlashcards } from './interface/flashcard.interface';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateFlashCardEntity } from './entities/flashCards.entity';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 
 @Controller('flashcards')
+@UseGuards(JwtAuthGuard)
 export class FlashcardsController {
   constructor(private readonly flashcardsService: FlashcardsService) {}
 
@@ -13,24 +15,36 @@ export class FlashcardsController {
   @ApiResponse({ status: 201, description: 'Flashcard created successfully.', type: UserFlashcards })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })
-  async createFlashcard(@Body() createFlashcardDto: CreateFlashcardDto): Promise<UserFlashcards> {
-    return this.flashcardsService.createFlashcard(createFlashcardDto);
+  async createFlashcard(
+    @Body() createFlashcardDto: CreateFlashcardDto,
+    @Req() req: any,
+  ): Promise<UserFlashcards> {
+    // Override user_id from JWT token to prevent forging
+    const dto = { ...createFlashcardDto, user_id: Number(req.user?.sub) };
+    return this.flashcardsService.createFlashcard(dto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Obtener todas las flashcards' })
+  @ApiOperation({ summary: 'Obtener todas las flashcards (paginado)' })
   @ApiResponse({ status: 200, description: 'Lista de flashcards obtenida exitosamente.', type: [UserFlashcards] })
   @ApiResponse({ status: 500, description: 'Internal Server Error.' })
-  async getAllFlashcards(): Promise<UserFlashcards[]> {
-    return this.flashcardsService.getAllFlashcards();
+  async getAllFlashcards(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ): Promise<UserFlashcards[]> {
+    const parsedLimit = Math.min(Number(limit) || 50, 100);
+    const parsedOffset = Number(offset) || 0;
+    return this.flashcardsService.getAllFlashcards(parsedLimit, parsedOffset);
   }
 
   @Get('/:id')
-  @ApiOperation({ summary: 'Obtener flashcards por ID de usuario' })
+  @ApiOperation({ summary: 'Obtener flashcards del usuario autenticado' })
   @ApiResponse({ status: 200, description: 'Flashcards obtenidas exitosamente.', type: [AllInfoFlashcard] })
   @ApiResponse({ status: 404, description: 'Flashcards not found.' })
-  async getFlashcardById(@Param('id') id: string) : Promise<AllInfoFlashcard[]> {
-    return this.flashcardsService.getFlashcardsByUserId(Number(id));
+  async getFlashcardById(@Param('id') id: string, @Req() req: any): Promise<AllInfoFlashcard[]> {
+    // Always return flashcards belonging to the authenticated user
+    const userId = Number(req.user?.sub);
+    return this.flashcardsService.getFlashcardsByUserId(userId);
   }
 
   @Patch('/:id')
@@ -39,27 +53,19 @@ export class FlashcardsController {
   @ApiResponse({ status: 404, description: 'Flashcard not found.' })
   async updateFlashcard(
     @Param('id') id: string,
-    @Body() updateDto: UpdateFlashcardDto
+    @Body() updateDto: UpdateFlashcardDto,
+    @Req() req: any,
   ) {
-    // user_id must be passed in body for ownership check (or obtain from auth in a future iteration)
-    const userId = updateDto.user_id;
-    if (!userId) {
-      throw new Error('user_id is required');
-    }
-    return this.flashcardsService.updateFlashcard(Number(id), Number(userId), updateDto);
+    const userId = Number(req.user?.sub);
+    return this.flashcardsService.updateFlashcard(Number(id), userId, updateDto);
   }
 
   @Delete('/:id')
   @ApiOperation({ summary: 'Eliminar flashcard por ID' })
   @ApiResponse({ status: 200, description: 'Flashcard deleted successfully.' })
   @ApiResponse({ status: 404, description: 'Flashcard not found.' })
-  async deleteFlashcard(
-    @Param('id') id: string,
-    @Body('userId') userId: number
-  ) {
-    if (!userId) {
-      throw new Error('userId is required');
-    }
-    return this.flashcardsService.deleteFlashcard(Number(id), Number(userId));
+  async deleteFlashcard(@Param('id') id: string, @Req() req: any) {
+    const userId = Number(req.user?.sub);
+    return this.flashcardsService.deleteFlashcard(Number(id), userId);
   }
 }

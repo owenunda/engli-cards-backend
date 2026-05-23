@@ -2,10 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class CompleteQuizDto {
-	@ApiProperty({ description: 'ID del usuario', minimum: 1 })
+	@ApiProperty({ description: 'ID del usuario (ignorado — se usa el del token JWT)', required: false })
+	@IsOptional()
 	@IsInt({ message: 'userId debe ser un número entero' })
 	@Min(1, { message: 'userId debe ser mayor a 0' })
-	userId: number;
+	userId?: number;
 
 	@ApiProperty({ description: 'Total de preguntas en el quiz', minimum: 1 })
 	@IsInt({ message: 'totalQuestions debe ser un número entero' })

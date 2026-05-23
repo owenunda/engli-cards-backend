@@ -11,8 +11,8 @@ export class FlashcardsService {
     return this.flashcardsRepository.createFlashcard(createFlashcardDto);
   }
 
-  async getAllFlashcards(): Promise<UserFlashcards[]> {
-    return this.flashcardsRepository.getAllFlashcards();
+  async getAllFlashcards(limit = 50, offset = 0): Promise<UserFlashcards[]> {
+    return this.flashcardsRepository.getAllFlashcards(limit, offset);
   }
   async getFlashcardsByUserId(id: number): Promise<AllInfoFlashcard[]> {
     return this.flashcardsRepository.getFlashcardsByUserId(id);

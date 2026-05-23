@@ -84,9 +84,9 @@ export class  ProgressService {
         return this.addLevelComputed(row);
     }
 
-    async getQuizSessions(userId: number, days = 30) {
+    async getQuizSessions(userId: number, days = 30, limit = 50) {
         if (days <= 0) days = 30;
-        return this.progressRepository.getSessions(userId, days);
+        return this.progressRepository.getSessions(userId, days, limit);
     }
 
     async getAchievements(userId: number) {
@@ -142,68 +142,70 @@ export class  ProgressService {
     }
 
     private async evaluateAchievements(client: any, userId: number, dto: CompleteQuizDto, totalsRow: any, finishedAt: Date, streakCurrent: number, totals: Totals) {
-        // Obtener estado anterior
-        const beforeState = await this.progressRepository.getAllUserAchievementsTx(client, userId);
-        const beforeMap = new Map(beforeState.map(a => [a.achievement_code, a.is_completed]));
+        // Cargar todo el estado en una sola query al inicio
+        interface AchievementRow {
+            achievement_code: string;
+            title: string;
+            description: string;
+            icon_type: string;
+            target_value: number;
+            is_completed: boolean;
+            current_value: number;
+        }
+        const allAchievements: AchievementRow[] = await this.progressRepository.getAllUserAchievementsTx(client, userId);
+        const stateMap = new Map<string, AchievementRow>(allAchievements.map(a => [a.achievement_code, a]));
+        const beforeCompleted = new Map<string, boolean>(allAchievements.map(a => [a.achievement_code, a.is_completed]));
 
-        // 1. FIRST_QUIZ
-        await this.progressRepository.updateAchievement(client, userId, 'FIRST_QUIZ', 1, true);
-
-        // 2. STREAK_7
-        const streak7Completed = streakCurrent >= 7;
-        await this.progressRepository.updateAchievement(client, userId, 'STREAK_7', Math.min(streakCurrent, 7), streak7Completed);
-
-        // 3. STREAK_30
-        const streak30Completed = streakCurrent >= 30;
-        await this.progressRepository.updateAchievement(client, userId, 'STREAK_30', Math.min(streakCurrent, 30), streak30Completed);
-
-        // 4. LEVEL_5
-        const level5Completed = totals.level >= 5;
-        await this.progressRepository.updateAchievement(client, userId, 'LEVEL_5', Math.min(totals.level, 5), level5Completed);
-
-        // 5. CORRECT_100
-        const totalCorrect = Number(totalsRow.correct_answers_total);
-        const correct100Completed = totalCorrect >= 100;
-        await this.progressRepository.updateAchievement(client, userId, 'CORRECT_100', Math.min(totalCorrect, 100), correct100Completed);
-
-        // 6. EARLY_BIRD_1
         const hour = finishedAt.getHours();
+        const totalCorrect = Number(totalsRow.correct_answers_total);
+
+        // Calcular nuevos valores en memoria — sin queries adicionales
+        const updates: Array<{ code: string; value: number; completed: boolean }> = [];
+
+        updates.push({ code: 'FIRST_QUIZ', value: 1, completed: true });
+
+        updates.push({ code: 'STREAK_7', value: Math.min(streakCurrent, 7), completed: streakCurrent >= 7 });
+        updates.push({ code: 'STREAK_30', value: Math.min(streakCurrent, 30), completed: streakCurrent >= 30 });
+        updates.push({ code: 'LEVEL_5', value: Math.min(totals.level, 5), completed: totals.level >= 5 });
+        updates.push({ code: 'CORRECT_100', value: Math.min(totalCorrect, 100), completed: totalCorrect >= 100 });
+
         if (hour < 8) {
-            await this.progressRepository.updateAchievement(client, userId, 'EARLY_BIRD_1', 1, true);
+            updates.push({ code: 'EARLY_BIRD_1', value: 1, completed: true });
         }
 
-        // 7. NIGHT_OWL_3
+        // NIGHT_OWL_3 — usar current_value del mapa ya cargado
         if (hour >= 23 || hour < 4) {
-            const no3 = await this.progressRepository.getUserAchievementByCode(client, userId, 'NIGHT_OWL_3');
+            const no3 = stateMap.get('NIGHT_OWL_3');
             if (no3 && !no3.is_completed) {
                 const newVal = Math.min((no3.current_value || 0) + 1, 3);
-                await this.progressRepository.updateAchievement(client, userId, 'NIGHT_OWL_3', newVal, newVal >= 3);
+                updates.push({ code: 'NIGHT_OWL_3', value: newVal, completed: newVal >= 3 });
             }
         }
 
-        // 8. PERFECT_LESSONS_5
-        const pl5 = await this.progressRepository.getUserAchievementByCode(client, userId, 'PERFECT_LESSONS_5');
+        // PERFECT_LESSONS_5 — usar current_value del mapa ya cargado
+        const pl5 = stateMap.get('PERFECT_LESSONS_5');
         if (pl5 && !pl5.is_completed) {
             if (dto.correctAnswers === dto.totalQuestions && dto.totalQuestions > 0) {
                 const newVal = Math.min((pl5.current_value || 0) + 1, 5);
-                await this.progressRepository.updateAchievement(client, userId, 'PERFECT_LESSONS_5', newVal, newVal >= 5);
+                updates.push({ code: 'PERFECT_LESSONS_5', value: newVal, completed: newVal >= 5 });
             } else {
-                await this.progressRepository.updateAchievement(client, userId, 'PERFECT_LESSONS_5', 0, false);
+                updates.push({ code: 'PERFECT_LESSONS_5', value: 0, completed: false });
             }
         }
 
-        // Obtener estado posterior y comparar
-        const afterState = await this.progressRepository.getAllUserAchievementsTx(client, userId);
-        const newlyUnlocked: any[] = [];
+        // Ejecutar todas las actualizaciones
+        await Promise.all(
+            updates.map(u => this.progressRepository.updateAchievement(client, userId, u.code, u.value, u.completed))
+        );
 
-        for (const after of afterState) {
-            const wasCompleted = beforeMap.get(after.achievement_code);
-            if (!wasCompleted && after.is_completed) {
-                newlyUnlocked.push({
-                    title: after.title,
-                    description: after.description,
-                    icon_type: after.icon_type,
-                });
+        // Detectar logros recién desbloqueados usando el estado anterior en memoria
+        const newlyUnlocked: any[] = [];
+        for (const u of updates) {
+            if (u.completed && !beforeCompleted.get(u.code)) {
+                const meta = stateMap.get(u.code);
+                if (meta) {
+                    newlyUnlocked.push({ title: meta.title, description: meta.description, icon_type: meta.icon_type });
+                }
             }
         }
 
