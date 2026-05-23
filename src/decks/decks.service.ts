@@ -4,6 +4,7 @@ import { CreateDecksDto, Decks, DecksWithFlashcards } from './interfaces/decks.i
 import { AllInfoFlashcard } from '../flashcards/interface/flashcard.interface';
 import * as fs from 'fs';
 import * as path from 'path';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class DecksService {
@@ -50,8 +51,7 @@ export class DecksService {
         }
 
         // Seleccionar 5 preguntas al azar
-        const shuffled = [...flashcards].sort(() => 0.5 - Math.random());
-        const selectedCards = shuffled.slice(0, 5);
+        const selectedCards = this.fisherYates(flashcards).slice(0, 5);
 
         const quiz = selectedCards.map((card, index) => {
             // Regla fija solicitada: arriba espanol, opciones en ingles.
@@ -69,10 +69,9 @@ export class DecksService {
             potentialDistractors = [...new Set([...potentialDistractors, ...fallbackPool])];
             
             // 3. Mezclar y tomar 3
-            const wrongOptions = potentialDistractors
-                .filter(d => d.toLowerCase() !== correctAnswer.toLowerCase())
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 3);
+            const wrongOptions = this.fisherYates(
+                potentialDistractors.filter(d => d.toLowerCase() !== correctAnswer.toLowerCase())
+            ).slice(0, 3);
 
             // 4. Crear opciones finales
             const options = [
@@ -83,7 +82,7 @@ export class DecksService {
             return {
                 id: card.id || index + 1,
                 question: questionText,
-                options: options.sort(() => 0.5 - Math.random()) // Barajar opciones
+                options: this.fisherYates(options),
             };
         });
 
@@ -92,5 +91,14 @@ export class DecksService {
 
     async initializeSystemDecks() {
         return this.decksRepository.initializeSystemDecks();
-        }
     }
+
+    private fisherYates<T>(arr: T[]): T[] {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = randomInt(0, i + 1);
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+}

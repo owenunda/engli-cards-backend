@@ -4,6 +4,7 @@ import { RegisterDto } from './dto/register.dto';
 import { envConfig } from '../config/envConfig';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { randomInt, timingSafeEqual } from 'crypto';
 import { LoginDto } from './dto/login.dto';
 
 import { RedisService } from '../database/redis.service';
@@ -19,15 +20,22 @@ export class AuthService {
 
   async register(UserDto: RegisterDto) {
     const existing = await this.usersRepository.getUserByEmail(UserDto.email);
-
-    if (existing) throw new BadRequestException('User already exists');
+    if (existing) throw new BadRequestException('Este correo ya está registrado');
 
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(UserDto.password, salt);
 
     const user = await this.usersRepository.createUser({ name: UserDto.name, email: UserDto.email, password: hashed });
     delete user.password;
-    return user;
+
+    // Igual que login: devolver token + user para que el frontend pueda iniciar sesión directo
+    const token = jwt.sign(
+      { sub: user.id, name: user.name, role: user.role },
+      envConfig().jwt_secret,
+      { expiresIn: '1h', algorithm: 'HS256' }
+    );
+
+    return { token, user };
   }
 
   async login(userDto: LoginDto) {
@@ -37,16 +45,17 @@ export class AuthService {
     const match = await bcrypt.compare(userDto.password, user.password);
     if (!match) throw new UnauthorizedException('Invalid credentials');
 
-    const token = jwt.sign({ sub: user.id, name: user.name, role: user.role }, envConfig().jwt_secret, { expiresIn: '1h' });
+    const token = jwt.sign({ sub: user.id, name: user.name, role: user.role }, envConfig().jwt_secret, { expiresIn: '1h', algorithm: 'HS256' });
     delete user.password;
     return { user, token };
   }
 
   async forgotPassword(email: string) {
     const user = await this.usersRepository.getUserByEmail(email);
-    if (!user) throw new BadRequestException('Usuario no encontrado');
+    // Don't reveal whether the email exists to prevent user enumeration
+    if (!user) return { message: 'Código enviado al correo' };
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const otp = randomInt(100000, 1000000).toString(); // 6 dígitos, criptográficamente seguro
     
     await this.redisService.setOtp(email, otp, 300); // 5 minutos
     await this.redisService.resetAttempts(email);
@@ -67,7 +76,9 @@ export class AuthService {
       throw new BadRequestException('El código ha expirado o no es válido');
     }
 
-    if (savedOtp !== otp) {
+    const otpMatch = savedOtp.length === otp.length &&
+      timingSafeEqual(Buffer.from(savedOtp), Buffer.from(otp));
+    if (!otpMatch) {
       await this.redisService.incrementAttempts(email);
       const remaining = 3 - (attempts + 1);
       throw new BadRequestException(`Código incorrecto. Te quedan ${remaining} intentos.`);

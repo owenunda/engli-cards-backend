@@ -1,6 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNumber, IsOptional, IsString } from "class-validator";
-import e from "express";
 
 export class Word {
   @ApiProperty()
@@ -45,11 +44,13 @@ export class CreateFlashcardDto {
   @IsString()
   @IsOptional()
   image_url?: string;
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsNumber()
-  user_id: number;
-  @ApiProperty()
+  @IsOptional()
+  user_id?: number;
+  @ApiProperty({ required: false })
   @IsNumber()
+  @IsOptional()
   deck_id?: number;
 }
 
@@ -69,9 +70,10 @@ export class UpdateFlashcardDto {
   @IsOptional()
   image_url?: string;
 
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: false })
   @IsNumber()
-  user_id: number;
+  @IsOptional()
+  user_id?: number;
 }
 
 export class AllInfoFlashcard {

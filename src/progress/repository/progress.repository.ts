@@ -79,15 +79,17 @@ export class ProgressRepository{
         return res.rows[0];
     }
 
-    async getSessions(userId: number, days: number) {
+    async getSessions(userId: number, days: number, limit = 50) {
+        const safeLimit = Math.min(limit, 100);
         const q = `
             SELECT id, deck_id, total_questions, correct_answers, points_awarded, completed_at, time_spent_seconds
             FROM user_quiz_sessions
             WHERE user_id = $1
               AND completed_at >= NOW() - ($2 || ' days')::INTERVAL
             ORDER BY completed_at DESC
+            LIMIT $3
         `;
-        const res = await this.databaseService.query(q, [userId, days]);
+        const res = await this.databaseService.query(q, [userId, days, safeLimit]);
         return res.rows;
     }
 
@@ -149,7 +151,9 @@ export class ProgressRepository{
 
     async getAllUserAchievementsTx(client: any, userId: number) {
         const q = `
-            SELECT a.achievement_code, a.title, a.icon_type, a.description, ua.is_completed
+            SELECT a.achievement_code, a.title, a.icon_type, a.description, a.target_value,
+                   COALESCE(ua.is_completed, false) as is_completed,
+                   COALESCE(ua.current_value, 0) as current_value
             FROM achievements a
             LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1
         `;

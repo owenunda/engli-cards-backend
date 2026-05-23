@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { AllInfoFlashcard, CreateFlashcardDto, UserFlashcards } from '../interface/flashcard.interface';
 
@@ -43,7 +43,8 @@ export class FlashcardsRepository {
         return resultGetUserFlashcard.rows[0];
       })
     } catch (error) {
-      throw new Error('Error creating flashcard');
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Error al crear la flashcard');
     }
   }
 
@@ -68,23 +69,30 @@ export class FlashcardsRepository {
         const updateRelationRes = await client.query(updateRelationQuery, [newWordId, userFlashcardId, userId]);
 
         if (updateRelationRes.rows.length === 0) {
-          throw new Error('Relation not found or not owned by user');
+          throw new NotFoundException('Flashcard no encontrada o no pertenece al usuario');
         }
 
         return { user_flashcard: updateRelationRes.rows[0], word: insertWordRes.rows[0] };
       })
     } catch (error) {
-      throw new Error('Error updating flashcard');
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Error al actualizar la flashcard');
     }
   }
 
-  async getAllFlashcards(): Promise<UserFlashcards[]> {
+  async getAllFlashcards(limit = 50, offset = 0): Promise<UserFlashcards[]> {
     try {
-      const query = 'SELECT uf.id, uf.user_id, uf.word_id, uf.created_at, uf.updated_at, w.word, w.translation, w.image_url FROM user_flashcards as uf inner join words as w on uf.word_id = w.id';
-      const result = await this.databaseService.query(query);
+      const query = `
+        SELECT uf.id, uf.user_id, uf.word_id, uf.created_at, uf.updated_at, w.word, w.translation, w.image_url
+        FROM user_flashcards AS uf
+        INNER JOIN words AS w ON uf.word_id = w.id
+        ORDER BY uf.created_at DESC
+        LIMIT $1 OFFSET $2
+      `;
+      const result = await this.databaseService.query(query, [limit, offset]);
       return result.rows;
     } catch (error) {
-      throw new Error('Error fetching flashcards');
+      throw new InternalServerErrorException('Error al obtener las flashcards');
     }
   }
 
@@ -99,7 +107,7 @@ export class FlashcardsRepository {
       const result = await this.databaseService.query(query, [userId]);
       return result.rows;
     } catch (error) {
-      throw new Error('Error fetching user flashcards');
+      throw new InternalServerErrorException('Error al obtener las flashcards del usuario');
     }
   }
 
@@ -111,7 +119,7 @@ export class FlashcardsRepository {
         const findRes = await client.query(findQuery, [userFlashcardId, userId]);
 
         if (findRes.rows.length === 0) {
-          throw new Error('Flashcard not found or not owned by user');
+          throw new NotFoundException('Flashcard no encontrada o no pertenece al usuario');
         }
 
         const wordId = findRes.rows[0].word_id;
@@ -128,7 +136,8 @@ export class FlashcardsRepository {
         return { message: 'Flashcard deleted successfully' };
       });
     } catch (error) {
-      throw new Error('Error deleting flashcard: ' + error.message);
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Error al eliminar la flashcard');
     }
   }
 }

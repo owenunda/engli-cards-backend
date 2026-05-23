@@ -14,7 +14,16 @@ export const envConfig = () => {
 
 		// Server
 		server_port: parseInt(env.PORT || '3000'),
-		jwt_secret: env.JWT_SECRET || 'changeme',
+		jwt_secret: (() => {
+			if (!env.JWT_SECRET) {
+				if (env.NODE_ENV === 'production') {
+					throw new Error('JWT_SECRET environment variable is required in production');
+				}
+				console.warn('⚠️  JWT_SECRET no está definido. Usando valor inseguro solo para desarrollo. Define JWT_SECRET en .env');
+				return 'changeme-dev-only';
+			}
+			return env.JWT_SECRET;
+		})(),
 		frontend_urls: (env.FRONTEND_URLS || '')
 			.split(',')
 			.map((s) => s.trim())

@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { CreateUserDto, UpdateUserDto, User } from '../interfaces/user.interface';
 import { UserEntity } from '../entities/user.entity';
 
 @Injectable()
 export class UsersRepository {
+	private readonly logger = new Logger(UsersRepository.name);
 	constructor(private readonly databaseService: DatabaseService) {}
 
 	async getAllUsers(): Promise<UserEntity[]> {
@@ -15,7 +16,7 @@ export class UsersRepository {
 			const result = await this.databaseService.query(query);
 			return result.rows;	
 		} catch (error) {
-			console.error('Error al obtener los usuarios: - users.repository.ts:18', error);
+			this.logger.error('Error al obtener usuarios', error);
 			return [];
 		}
 	}
@@ -26,8 +27,8 @@ export class UsersRepository {
 			const result = await this.databaseService.query(query, [id])
 			return result.rows[0]
 		} catch (error) {
-			console.error('Error al obtener al usuario - users.repository.ts:29')
-			throw error
+			this.logger.error(`Error al obtener usuario id=${id}`, error);
+			throw new InternalServerErrorException('Error al obtener el usuario');
 		}
 	}
 	// necesario para el login
@@ -37,8 +38,8 @@ export class UsersRepository {
 			const result = await this.databaseService.query(query, [email]);
 			return result.rows[0];
 		} catch (error) {
-			console.error('Error al obtener usuario por email - users.repository.ts:40', error);
-			throw error;
+			this.logger.error('Error al obtener usuario por email', error);
+			throw new InternalServerErrorException('Error al obtener el usuario');
 		}
 	}
 	
@@ -50,8 +51,8 @@ export class UsersRepository {
 			const result = await this.databaseService.query(query, [user.name, user.email, user.password, user.role || 'student']);
 			return result.rows[0];
 		} catch (error) {
-			console.error('Error al crear el usuario: - users.repository.ts:53', error);
-			throw error;
+			this.logger.error('Error al crear usuario', error);
+			throw new InternalServerErrorException('Error al crear el usuario');
 		}
 	}
 
@@ -74,13 +75,14 @@ export class UsersRepository {
 			const result = await this.databaseService.query(query, values);
 			
 			if (result.rows.length === 0) {
-				throw new Error(`Usuario con id ${id} no encontrado`);
+				throw new NotFoundException(`Usuario con id ${id} no encontrado`);
 			}
-			
+
 			return result.rows[0];
 		} catch (error) {
-			console.error('Error al actualizar el usuario: - users.repository.ts:82', error);
-			throw error;
+			if (error instanceof NotFoundException) throw error;
+			this.logger.error(`Error al actualizar usuario id=${id}`, error);
+			throw new InternalServerErrorException('Error al actualizar el usuario');
 		}
 	}
 
@@ -95,8 +97,8 @@ export class UsersRepository {
 
 			return { message: `User with id ${id} has been deleted.` };
 		} catch (error) {
-			console.error('Error al eliminar el usuario: - users.repository.ts:98', error);
-			throw error;
+			this.logger.error(`Error al eliminar usuario id=${id}`, error);
+			throw new InternalServerErrorException('Error al eliminar el usuario');
 		}
 	}
 
@@ -105,8 +107,8 @@ export class UsersRepository {
 			const query = `UPDATE users SET password = $1 WHERE id = $2`;
 			await this.databaseService.query(query, [hashed, id]);
 		} catch (error) {
-			console.error('Error al actualizar la contraseña - users.repository.ts', error);
-			throw error;
+			this.logger.error(`Error al actualizar contraseña usuario id=${id}`, error);
+			throw new InternalServerErrorException('Error al actualizar la contraseña');
 		}
 	}
 }
