@@ -8,6 +8,7 @@ import { FlashcardsModule } from './flashcards/flashcards.module';
 import { DecksModule } from './decks/decks.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ProgressModule } from './progress/progress.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 
 @Module({
 	imports: [
@@ -25,6 +26,7 @@ import { ProgressModule } from './progress/progress.module';
 		DecksModule,
 		CloudinaryModule,
 		ProgressModule,
+		OnboardingModule,
 	],
 	controllers: [],
 	providers: [

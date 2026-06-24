@@ -24,6 +24,10 @@ export class User {
 	@IsString()
 	role?: string;
 
+	@ApiProperty({required: false})
+	@IsOptional()
+	onboarding_completed?: boolean;
+
 	password?: string;
 	created_at: Date;
 	updated_at: Date;

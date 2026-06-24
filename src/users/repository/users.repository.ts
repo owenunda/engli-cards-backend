@@ -23,7 +23,7 @@ export class UsersRepository {
 
 	async getUserById(id: Number): Promise<UserEntity> {
 		try {
-			const query = 'SELECT id, email, name, avatar_url, role, created_at, updated_at FROM users WHERE id = $1'
+			const query = 'SELECT id, email, name, avatar_url, role, onboarding_completed, created_at, updated_at FROM users WHERE id = $1'
 			const result = await this.databaseService.query(query, [id])
 			return result.rows[0]
 		} catch (error) {
@@ -34,7 +34,7 @@ export class UsersRepository {
 	// necesario para el login
 	async getUserByEmail(email: string): Promise<any> {
 		try {
-			const query = `SELECT id, name, email, password, avatar_url, role, created_at, updated_at FROM users WHERE email = $1 LIMIT 1`;
+			const query = `SELECT id, name, email, password, avatar_url, role, onboarding_completed, created_at, updated_at FROM users WHERE email = $1 LIMIT 1`;
 			const result = await this.databaseService.query(query, [email]);
 			return result.rows[0];
 		} catch (error) {
@@ -47,7 +47,7 @@ export class UsersRepository {
 	// no usar USER ENTITY AQUI PARA EVITAR INCLUIR EL PASSWORD
 	async createUser(user: CreateUserDto): Promise<User> {
 		try {
-			const query = `INSERT INTO users(name, email, password, role) VALUES($1, $2, $3, $4) RETURNING id, name, email, avatar_url, role, created_at, updated_at`;
+			const query = `INSERT INTO users(name, email, password, role) VALUES($1, $2, $3, $4) RETURNING id, name, email, avatar_url, role, onboarding_completed, created_at, updated_at`;
 			const result = await this.databaseService.query(query, [user.name, user.email, user.password, user.role || 'student']);
 			return result.rows[0];
 		} catch (error) {
