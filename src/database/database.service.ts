@@ -88,6 +88,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     private async ensureStudyTimeColumns() {
         const alterUsers = `
             ALTER TABLE IF EXISTS users
+            ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'student',
+            ADD COLUMN IF NOT EXISTS avatar_url TEXT,
             ADD COLUMN IF NOT EXISTS study_time_total_seconds INTEGER DEFAULT 0;
         `;
 
