@@ -116,6 +116,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         await this.query(alterSessions);
         await this.query(alterDecks);
         await this.ensureAchievementsTables();
+        await this.ensureSystemDecks();
     }
 
     private async ensureAchievementsTables() {
@@ -152,6 +153,28 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
             ('Madrugador', 'Estudia temprano, antes de las 8:00 AM.', 1, 'Sun', 'EARLY_BIRD_1'),
             ('Erudito', 'Alcanza el nivel 5 de experiencia.', 5, 'GraduationCap', 'LEVEL_5')
             ON CONFLICT (achievement_code) DO NOTHING;
+        `);
+    }
+
+    private async ensureSystemDecks() {
+        await this.query(`
+            ALTER TABLE IF EXISTS decks ALTER COLUMN user_id DROP NOT NULL;
+
+            UPDATE decks 
+            SET is_system = true 
+            WHERE name IN ('Greetings', 'Fruits', 'Family', 'Familia', 'Trabajo', 'Work', 'Escuela', 'School', 'Viajes', 'Travel');
+
+            INSERT INTO decks (name, user_id, is_system, order_index, min_accuracy, created_at, updated_at)
+            SELECT name, NULL, true, order_index, 0.9, NOW(), NOW()
+            FROM (VALUES
+              ('Greetings', 1),
+              ('Fruits', 2),
+              ('Family', 3),
+              ('Trabajo', 4),
+              ('Escuela', 5),
+              ('Viajes', 6)
+            ) AS v(name, order_index)
+            WHERE NOT EXISTS (SELECT 1 FROM decks WHERE name = v.name AND is_system = true);
         `);
     }
 
