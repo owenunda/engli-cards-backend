@@ -157,13 +157,18 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     private async ensureSystemDecks() {
-        await this.query(`
-            ALTER TABLE IF EXISTS decks ALTER COLUMN user_id DROP NOT NULL;
+        // Paso 1: Eliminar restriccion NOT NULL en user_id (separado para que surta efecto antes del INSERT)
+        await this.query(`ALTER TABLE IF EXISTS decks ALTER COLUMN user_id DROP NOT NULL;`);
 
+        // Paso 2: Marcar decks existentes con nombres de sistema como is_system = true
+        await this.query(`
             UPDATE decks 
             SET is_system = true 
             WHERE name IN ('Greetings', 'Fruits', 'Family', 'Familia', 'Trabajo', 'Work', 'Escuela', 'School', 'Viajes', 'Travel');
+        `);
 
+        // Paso 3: Insertar decks de sistema que no existan (user_id = NULL permitido tras el ALTER)
+        await this.query(`
             INSERT INTO decks (name, user_id, is_system, order_index, min_accuracy, created_at, updated_at)
             SELECT name, NULL, true, order_index, 0.9, NOW(), NOW()
             FROM (VALUES
