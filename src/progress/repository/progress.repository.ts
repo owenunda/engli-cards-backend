@@ -71,12 +71,17 @@ export class ProgressRepository{
     async getTotals(userId: number) {
         const q = `
             SELECT points_total, streak_current, streak_best, quizzes_completed,
-                   correct_answers_total, wrong_answers_total, study_time_total_seconds
+                   correct_answers_total, wrong_answers_total, study_time_total_seconds,
+                   last_activity_date
             FROM users
             WHERE id = $1
         `;
         const res = await this.databaseService.query(q, [userId]);
         return res.rows[0];
+    }
+
+    async resetStreak(userId: number) {
+        await this.databaseService.query('UPDATE users SET streak_current = 0 WHERE id = $1', [userId]);
     }
 
     async getSessions(userId: number, days: number, limit = 50) {

@@ -36,7 +36,7 @@ export class  ProgressService {
             if (!user) throw new NotFoundException('Usuario no encontrado');
 
             const { streakCurrent, streakBest } = this.computeStreak(
-                user.last_activity_date as string | null,
+                this.toDateStr(user.last_activity_date),
                 localDate,
                 user.streak_current as number,
                 user.streak_best as number,
@@ -81,6 +81,13 @@ export class  ProgressService {
     async getStats(userId: number): Promise<Totals> {
         const row = await this.progressRepository.getTotals(userId);
         if (!row) throw new NotFoundException('Usuario no encontrado');
+        // Si el último día de actividad no es hoy ni ayer, la racha se rompió: se reinicia a 0.
+        const last = this.toDateStr(row.last_activity_date);
+        const today = this.isoDateOnly(new Date());
+        if (row.streak_current > 0 && (!last || this.daysDiff(last, today) > 1)) {
+            await this.progressRepository.resetStreak(userId);
+            row.streak_current = 0;
+        }
         return this.addLevelComputed(row);
     }
 
@@ -133,6 +140,17 @@ export class  ProgressService {
 
     private isoDateOnly(d: Date) {
         return d.toISOString().slice(0, 10);
+    }
+
+    /** pg devuelve DATE como Date en hora local; lo normaliza a 'YYYY-MM-DD'. */
+    private toDateStr(value: unknown): string | null {
+        if (!value) return null;
+        if (value instanceof Date) {
+            const m = String(value.getMonth() + 1).padStart(2, '0');
+            const d = String(value.getDate()).padStart(2, '0');
+            return `${value.getFullYear()}-${m}-${d}`;
+        }
+        return String(value).slice(0, 10);
     }
 
     private daysDiff(aDate: string, bDate: string) {
