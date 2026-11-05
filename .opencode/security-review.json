@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "severities": ["critical", "high"],
+  "ignoreFiles": ["**/*.spec.ts"],
+  "rules": {}
+}
